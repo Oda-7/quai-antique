@@ -1,0 +1,29 @@
+.button-validate {
+	background-color: #242423;
+	color: #e8eddf;
+	box-shadow: 3px 3px 4px 1px rgba(0, 0, 0, 1);
+}
+.button-validate:hover {
+	background-color: gray;
+	color: #e8eddf;
+}
+.button-cancel {
+	background-color: #f60303;
+	color: #e8eddf;
+	box-shadow: 3px 3px 4px 1px rgba(0, 0, 0, 1);
+}
+.button-cancel:hover {
+	background-color: #830303;
+	color: #e8eddf;
+}
+
+.changeHeightAndWidht {
+	width: 100%;
+	height: auto;
+}
+@media (max-width: 768px) {
+	.changeHeightAndWidht {
+		width: auto;
+		height: 100%;
+	}
+}
