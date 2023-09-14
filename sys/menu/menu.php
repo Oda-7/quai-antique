@@ -1,125 +1,137 @@
 <?php
-
+require_once './sys/db.php';
 $reqMenuList = $pdo->prepare('SELECT * FROM menu ORDER BY menu_title');
 $reqMenuList->execute();
 $menuList = $reqMenuList->fetchAll();
-include './sys/dishes/db_dishes.php';
-include './sys/food/db_categorie.php';
+require_once './sys/dishes/db_dishes.php';
+require_once './sys/food/db_categorie.php';
 ?>
 
-
-<form method="post" class="col-lg-7 border border-2 p-2 p-sm-3 border-dark rounded-3 d-flex flex-wrap flex-column flex-md-row align-items-center align-items-md-start align-items-lg-start align-self-start justify-content-center  gap-2">
-   <div class="d-flex flex-wrap justify-content-center gap-2 mx-3 mx-md-4">
-      <input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="button_add_menu" value="Ajouter un Menu">
-      <input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="button_add_menu_day" value="Ajouter un Menu/Suggestion Du jour">
-      <input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="delete_menu" value="Supprimer">
+<form method="post" class="mx-auto col-lg-7 border border-2 p-2 p-sm-3 border-dark rounded-3 d-flex flex-wrap flex-column flex-md-row align-items-center align-items-md-start align-items-lg-start align-self-start justify-content-center  gap-2">
+   <div class="d-flex flex-column  flex-md-row flex-wrap align-items-center justify-content-center gap-2 mx-3 mx-md-4 ">
+      <div class="d-flex flex-column  gap-2 w-75 justify-content-center ">
+         <input class="btn rounded button-validate" type="submit" name="button_add_menu" value="Ajouter un Menu">
+         <input class="btn rounded button-validate" style="word-wrap: break-word; white-space: normal;" type="submit" name="button_add_menu_day" value="Ajouter un Menu / Suggestion Du jour">
+         <input class="btn rounded button-cancel" type="submit" name="delete_menu" value="Supprimer">
+      </div>
+      <div>
+         <small><b><u>Cliquer sur le bouton pour obtenir la liste des allergènes :</u></b></small>
+         <img src="./svg/circle-info_dark.svg">
+      </div>
    </div>
 
-   <?php
-   if (!isset($menuList)) {
-      $menuSortByMenuDayAndSugesstion = array();
+   <div class="d-flex flex-column flex-wrap flex-md-row justify-content-center gap-3">
+      <?php
+      if (isset($menuList)) {
+         $menuSortByMenuDayAndSugesstion = array();
 
-      foreach ($menuList as $m => $menu) {
-         if (strtolower($menu->menu_title) == "suggestion du jour") {
-            array_unshift($menuSortByMenuDayAndSugesstion, $menu);
-         } elseif (strtolower($menu->menu_title) == "menu du jour") {
-            array_unshift($menuSortByMenuDayAndSugesstion, $menu);
-         } else {
-            array_push($menuSortByMenuDayAndSugesstion, $menu);
+         foreach ($menuList as $m => $menu) {
+            if (strtolower($menu->menu_title) == "suggestion du jour") {
+               array_unshift($menuSortByMenuDayAndSugesstion, $menu);
+            } elseif (strtolower($menu->menu_title) == "menu du jour") {
+               array_unshift($menuSortByMenuDayAndSugesstion, $menu);
+            } else {
+               array_push($menuSortByMenuDayAndSugesstion, $menu);
+            }
          }
-      }
 
-      foreach ($menuSortByMenuDayAndSugesstion as $menu) {
-         $reqSelectHaveMenu = $pdo->prepare('SELECT * FROM have_menu WHERE menu_id = ? ORDER BY  menu_categorie ASC');
-         $reqSelectHaveMenu->execute([$menu->menu_id]);
-         $SelectHaveMenu = $reqSelectHaveMenu->fetchAll();
-         // nom menu
 
-         echo '<div class="d-flex flex-column align-items-center p-2">
-         <h4>' . $menu->menu_title . '</h4>' . $menu->menu_price . ' ' . $menu->menu_description . '
+         foreach ($menuSortByMenuDayAndSugesstion as $m => $menu) {
+            $ListAllergicMenu = array();
+            $reqSelectHaveMenu = $pdo->prepare('SELECT * FROM have_menu WHERE menu_id = ? ORDER BY  menu_categorie ASC');
+            $reqSelectHaveMenu->execute([$menu->menu_id]);
+            $SelectHaveMenu = $reqSelectHaveMenu->fetchAll();
+            // nom menu
+
+            echo '<div class="d-flex flex-column border border-2 border-dark rounded align-items-center p-2">
+         <h4><u>' . $menu->menu_title . '</u></h4>' . $menu->menu_price . ' ' . $menu->menu_description . '
          <div class="">
          <a type="button" href="./panel.php?menu=' . $menu->menu_id . '"><img src="./svg/sticky.svg" alt="Modifier"></a>
          <input type="checkbox" name="checkbox_delete_menu[]" value="' . $menu->menu_id . '">
          </div>';
-         foreach ($SelectHaveMenu as $haveMenu) {
-            // Plat menu
-            $reqSelectDishesMenu = $pdo->prepare('SELECT * FROM dishes WHERE dishes_id = ?');
-            $reqSelectDishesMenu->execute([$haveMenu->dishes_id]);
-            $selectDishesMenu = $reqSelectDishesMenu->fetch();
-            // Sous categorie du plat
-            $reqSelectSubCategorieMenu = $pdo->prepare('SELECT * FROM sub_categorie WHERE sub_categorie_id = ? ');
-            $reqSelectSubCategorieMenu->execute([$selectDishesMenu->sub_categorie_id]);
-            $selectSubCategorieMenu = $reqSelectSubCategorieMenu->fetch();
-            // categorie du plat
-            $reqSelectNameCategorie = $pdo->prepare('SELECT * FROM categorie WHERE categorie_id = ?');
-            $reqSelectNameCategorie->execute([$selectSubCategorieMenu->categorie_id]);
-            $selectNameCategorie = $reqSelectNameCategorie->fetch();
-            // aliment du plat
-            $ReqselectFoodDishes = $pdo->prepare('SELECT * FROM have_food WHERE dishes_id =?');
-            $ReqselectFoodDishes->execute([$haveMenu->dishes_id]);
-            $selectFoodDishes = $ReqselectFoodDishes->fetchAll();
-            // id de l'allergies, id de l'aliment
-            $reqSelectAllergicFood = $pdo->prepare('SELECT * FROM food_allergic WHERE food_id = ?');
+            foreach ($SelectHaveMenu as $haveMenu) {
+               // Plat menu
+               $reqSelectDishesMenu = $pdo->prepare('SELECT * FROM dishes WHERE dishes_id = ?');
+               $reqSelectDishesMenu->execute([$haveMenu->dishes_id]);
+               $selectDishesMenu = $reqSelectDishesMenu->fetch();
+               // Sous categorie du plat
+               $reqSelectSubCategorieMenu = $pdo->prepare('SELECT * FROM sub_categorie WHERE sub_categorie_id = ? ');
+               $reqSelectSubCategorieMenu->execute([$selectDishesMenu->sub_categorie_id]);
+               $selectSubCategorieMenu = $reqSelectSubCategorieMenu->fetch();
+               // categorie du plat
+               $reqSelectNameCategorie = $pdo->prepare('SELECT * FROM categorie WHERE categorie_id = ?');
+               $reqSelectNameCategorie->execute([$selectSubCategorieMenu->categorie_id]);
+               $selectNameCategorie = $reqSelectNameCategorie->fetch();
+               // aliment du plat
+               $ReqselectFoodDishes = $pdo->prepare('SELECT * FROM have_food WHERE dishes_id =?');
+               $ReqselectFoodDishes->execute([$haveMenu->dishes_id]);
+               $selectFoodDishes = $ReqselectFoodDishes->fetchAll();
+               // id de l'allergies, id de l'aliment
+               $reqSelectAllergicFood = $pdo->prepare('SELECT * FROM food_allergic WHERE food_id = ?');
 
-
-            echo '<table><thead><th>' . $selectNameCategorie->categorie_name . '</th></thead>';
-            echo '<tr><td>' .  $selectDishesMenu->dishes_name . '</td></tr>
-            <tr><td>' . $selectDishesMenu->dishes_description . '</td></tr>';
-
-            /// terminer les allergènes correctement
-            // var_dump($selectFoodDishes);
-            $ListAllergic = array();
-            foreach ($selectFoodDishes as $foodDishes) {
-               $reqSelectAllergicFood->execute([$foodDishes->food_id]);
-               $selectAllergicFood = $reqSelectAllergicFood->fetch();
-
-
-               if ($selectAllergicFood) {
-                  // allergic de l'aliment s'il en a une
-                  $reqSelectAllergic = $pdo->prepare('SELECT * FROM allergic WHERE allergic_id = ?');
-                  $reqSelectAllergic->execute([$selectAllergicFood->allergic_id]);
-                  $selectAllergic = $reqSelectAllergic->fetch();
-
-                  if (!in_array($selectAllergic, $ListAllergic)) {
-                     array_push($ListAllergic, $selectAllergic);
+               $ListAllergic = array();
+               foreach ($selectFoodDishes as $foodDishes) {
+                  $reqSelectAllergicFood->execute([$foodDishes->food_id]);
+                  $selectAllergicFood = $reqSelectAllergicFood->fetch();
+                  if ($selectAllergicFood) {
+                     // allergic de l'aliment s'il en a une
+                     $reqSelectAllergic = $pdo->prepare('SELECT * FROM allergic WHERE allergic_id = ?');
+                     $reqSelectAllergic->execute([$selectAllergicFood->allergic_id]);
+                     $selectAllergic = $reqSelectAllergic->fetch();
+                     // var_dump($selectAllergic);
+                     if (!in_array($selectAllergic, $ListAllergic)) {
+                        array_push($ListAllergic, $selectAllergic);
+                     }
                   }
                }
-            }
-            echo '<tr><td>
-            <small style="">Allergènes :</small>
-            <a role="button" data-bs-html="true" class="btn " id="allergic" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="
-            ';
+               // var_dump($ListAllergic[0]->allergic_name);
+               foreach ($ListAllergic as $l => $allergic) {
+                  if (!in_array($allergic->allergic_name, $ListAllergicMenu)) {
+                     array_push($ListAllergicMenu, $allergic->allergic_name);
+                  }
+               }
 
-            foreach ($ListAllergic as $allergic) {
-               echo ' - ' . $allergic->allergic_food . '<br>';
+               echo '<section class="d-flex flex-wrap flex-column w-100">
+            <h5>' . $selectNameCategorie->categorie_name . '</h5>';
+               echo '<h7>' .  $selectDishesMenu->dishes_name . '</h7>
+            <p style="word-break: break-word;" >' . $selectDishesMenu->dishes_description . '</p>';
+               echo '</section>';
             }
-            echo '"><img src="./svg/circle-info_dark.svg"></a></tr></td>';
-            echo '</table>';
-            echo '<br>';
+
+            echo '<a role="button" data-bs-html="true" class="btn" id="allergic" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="';
+            foreach ($ListAllergicMenu as $l => $allergic) {
+               // var_dump($allergic);
+               echo ' - ' . $allergic . '<br>';
+            }
+            echo '"><img src="./svg/circle-info_dark.svg">
+         </a>';
+            echo '</div>';
          }
-         echo '</div>';
+      } else {
+         echo "Aucun Menu";
       }
-   } else {
-      echo "Aucun Menu";
-   }
-   ?>
+      ?>
+   </div>
 </form>
-
 
 <?php
 // Menu
 if (isset($_POST['button_add_menu'])) :
    if (isset($_GET)) {
+      unset($_GET['categorie']);
+      unset($_GET['dishes']);
+      unset($_GET['food']);
       unset($_GET['menu']);
+      unset($_GET['id']);
    }
 ?>
 
-   <form method="post" class="gap-1 p-1 border rounded-3 border-2 border-dark col-lg-4 align-items-center justify-content-center justify-content-lg-start d-flex flex-wrap flex-column align-items-center justify-content-lg-start">
+   <form method="post" class=" gap-1 p-2 border rounded-3 border-2 border-dark col-lg-4 d-flex flex-wrap flex-column align-items-center align-self-start">
       <h4 class="text-center my-2">Ajouter un menu</h4>
       <input class="form-control" type="text" name="menu_title" placeholder="Titre du menu">
       <input class="form-control" type="number" name="menu_price" placeholder="Prix du menu">
       <textarea class="form-control" type="text" name="menu_description" rows="3" placeholder="Description du menu"></textarea>
-
+      <p><b>(Entrée - Plat) / (Plat - Dessert) / (Entrée - Plat - Dessert)</b></p>
       <?php
       // usort($categorieList, "sortDessert");
       foreach ($categorieList as $categorie) {
@@ -151,7 +163,8 @@ if (isset($_POST['button_add_menu'])) :
       ?>
 
       <!-- -->
-      <input type="submit" name="validate_add_menu">
+      <input class="btn button-validate" type="submit" name="validate_add_menu" value="Ajouter un menu">
+      <input class="btn button-cancel" id="cancel_delete" type="button" value="Annuler">
    </form>
 <?php
 endif;
@@ -217,16 +230,15 @@ if (isset($_POST["button_add_menu_day"])) :
 
          <br>
       <?php endforeach; ?>
-      <input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="validate_menu_day" value="Valider un menu du jour">
+      <input class="btn button-validate" type="submit" name="validate_menu_day" value="Valider un menu du jour">
+      <input class="btn button-cancel" id="cancel_delete" type="button" value="Annuler">
    </form>
 <?php endif; ?>
 
 
 <?php
 // modify menu
-if (isset($_GET['menu'])) : ?>
-
-   <?php
+if (isset($_GET['menu'])) :
    $reqSelectMenuModify = $pdo->prepare('SELECT * FROM menu WHERE menu_id = ?');
    $reqSelectMenuModify->execute([$_GET['menu']]);
    $selectModifyMenu = $reqSelectMenuModify->fetch();
@@ -305,7 +317,9 @@ if (isset($_GET['menu'])) : ?>
          }
          echo '<br>';
       }
-      echo '<input class="btn " style="background-color: #242423 ;color: #e8eddf;" type="submit" name="validate_modify_menu_day" value="Modifier">';
+      echo '<input class="btn button-validate" type="submit" name="validate_modify_menu_day" value="Modifier">
+      <input class="btn button-cancel" id="cancel_delete" type="button" value="Annuler">';
+      echo '</form>';
    } else {
       // modify menu
       echo '<form method="post" class="border rounded-3 gap-1 border-2 border-dark col-lg-4 p-3 d-flex flex-wrap flex-column align-items-center">
@@ -350,11 +364,13 @@ if (isset($_GET['menu'])) : ?>
          }
          echo '</select>';
       }
-      echo '<input class="btn my-2" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="validate_modify_menu" value="Modifier">';
+
+      echo '<input class="btn my-2 button_validate"  type="submit" name="validate_modify_menu" value="Modifier">
+      <input class="btn button-cancel" id="cancel_delete" type="button" value="Annuler">';
+      echo '</form>';
    }
-   ?>
-   </form>
-<?php endif; ?>
+endif;
+?>
 
 <script>
    if (formMenuDay = document.querySelector('#form_menu_day')) {

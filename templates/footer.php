@@ -1,7 +1,7 @@
 </div>
 
 <footer class="mt-4 py-4" style="background-color:#242423; z-index: 2;">
-   <div class="container my-4 d-flex flex-wrap justify-content-between" style="color: #e8eddf;">
+   <div class="container my-4 d-flex gap-3 flex-wrap justify-content-between" style="color: #e8eddf;">
       <div>
          <h1 style="font-family: Charlotte;">Le Quai Antique</h1>
          <h2>Restaurant gastronomique</h2>
@@ -15,11 +15,16 @@
       <?php include './sys/planning/db_planning.php';
 
       if ($dayTime) : ?>
-         <div class="d-flex flex-wrap gap-1">
+         <div class="d-flex flex-wrap align-self-start  border border-2 rounded shadow">
             <?php
-            foreach ($dayTime as $dayTable) {
-               echo '<div class="p-1 border rounded shadow">
-               <h6 class="p-1">' . $dayTable->planning_name . '</h6><div>';
+            foreach ($dayTime as $d => $dayTable) {
+               if ($d == 0) {
+                  echo '<div class="d-flex flex-wrap flex-column m-2 p-2">';
+               } else {
+                  echo '<div class="d-flex flex-wrap flex-column border-start m-2 p-2">';
+               }
+
+               echo '<h6 class="p-1 border-bottom">' . $dayTable->planning_name . '</h6><div>';
                if ($dayTable->planning_close == 'fermé') {
                   echo $dayTable->planning_close;
                } else {

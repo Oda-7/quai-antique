@@ -1,4 +1,9 @@
 <?php
+if (session_status() == PHP_SESSION_NONE) {
+   session_start();
+}
+
+// var_dump(password_verify("123456789102", "$2y$10$MCmMffAaAVPFL88EC0DAUOZjlIgx.nfZSZ7Vj7Z8jYMzaOV77kJKK"));
 
 require './sys/class/Recaptcha.php';
 // include './sys/function.php';
@@ -36,9 +41,12 @@ if (!empty($_POST['email']) && !empty($_POST['password'])) {
       $req->execute([$_POST['email']]);
       // $req->execute([$email]);
       $user = $req->fetch();
+      // var_dump($user->user_reset_token);
 
-      if ($user->user_confirmed_at == 'NULL') {
+      if ($user->user_confirmed_at == NULL) {
          $errors['confirm'] = "L'utilisateur n'a pas confirmer l'email";
+      } elseif ($user->user_reset_token != NULL) {
+         $errors['reset'] = "L'utilisateur n'a pas confirmé la réinitialisation de son mot de passe";
       } else {
          if (password_verify($_POST['password'], $user->user_password) && empty($errors)) {
             $reqProfil = $pdo->prepare('SELECT * FROM profil WHERE profil_id = ? ');
@@ -52,9 +60,7 @@ if (!empty($_POST['email']) && !empty($_POST['password'])) {
                setcookie('remember', $user->user_id . '//' . $remember_token . sha1($user->user_id . 'ratonlaveurs'), time() + 60 * 60 * 24 * 7, '/');
             }
 
-            if (session_status() == PHP_SESSION_NONE) {
-               session_start();
-            }
+
             $_SESSION['auth'] = $user;
             // var_dump($_SESSION['auth']);
             $_SESSION['flash']['success'] = "Vous êtes maintenant connecté " . $userProfil->profil_firstname;
@@ -87,7 +93,17 @@ include './templates/header.php';
          <?php endforeach; ?>
       </ul>
    </div>
-<?php endif; ?>
+   <?php endif;
+
+if (isset($_SESSION['flash'])) :
+   foreach ($_SESSION['flash'] as $type => $message) : ?>
+      <div class="alert alert-<?= $type; ?>">
+         <?= $message; ?>
+      </div>
+<?php endforeach;
+   unset($_SESSION['flash']);
+endif; ?>
+
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <div class="mx-4">
    <div class="d-flex flex-column align-items-center mt-5">

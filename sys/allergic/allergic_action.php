@@ -6,27 +6,37 @@ if (isset($_POST['submit_add_validate'])) {
    } else {
       $reqInsertAllergic = $pdo->prepare('INSERT INTO allergic SET allergic_name = ?, allergic_food = ?');
       $reqInsertAllergic->execute([$_POST['allergic_name'], $_POST['allergic_food']]);
+      $_SESSION['flash']['success'] = "Vous avez ajouter l'allergène " . $_POST['allergic_name'];
    }
 }
 
 if (isset($_POST['submit_update'])) {
+   $reqUpdateRead = $pdo->prepare('SELECT * FROM allergic WHERE allergic_id = ?');
+   $reqUpdateRead->execute([$_GET['id']]);
+   $allergicUpdate = $reqUpdateRead->fetch();
    if (empty($_POST['allergic_name']) || empty($_POST['allergic_food'])) {
       $errors['allergic_empty'] = "Vous devez remplir les 2 champs pour ajouter un allergènes";
-   } else {
+   } elseif (!empty($_POST['allergic_name']) && !empty($_POST['allergic_food'])) {
       $reqUpdate = $pdo->prepare('UPDATE allergic SET allergic_name = ?, allergic_food = ? WHERE allergic_id = ' . $allergicUpdate->allergic_id);
       $reqUpdate->execute([$_POST['allergic_name'], $_POST['allergic_food']]);
+      $_SESSION['flash']['success'] = "Vous avez modifié l'allergène " . $_POST['allergic_name'];
+      header('refresh:3;url=./panel.php');
    }
-   // unset($_GET['id']);
-   // header('location: ./panel.php');
-   $urlLogin = "panel.php";
-   echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
 }
 
 if (isset($_POST['cancel_allergic'])) {
    unset($_GET['id']);
 }
 
+
 if (isset($_POST['submit_delete'])) {
+   if (isset($_GET)) {
+      unset($_GET['categorie']);
+      unset($_GET['dishes']);
+      unset($_GET['food']);
+      unset($_GET['menu']);
+      unset($_GET['id']);
+   }
    if (!empty($_POST['checkbox_delete'])) {
       for ($i = 0; $i < count($_POST['checkbox_delete']); $i++) {
          $reqNameAllergic = $pdo->prepare('SELECT * FROM allergic WHERE allergic_id = ?');
@@ -83,7 +93,7 @@ function requestAllergic()
    $allergicTable = $reqAllergic->fetchAll();
 
    foreach ($allergicTable as $a => $key) {
-      echo '<div class="d-flex flex-column">
+      echo '<div class="d-flex flex-column w-100">
          <b> ' . $key->allergic_name . '</b>
          <p class="mb-0">' . $key->allergic_food . '</p>
             <div>

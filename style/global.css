@@ -27,3 +27,12 @@
 		height: 100%;
 	}
 }
+
+.changeHeightFromFood {
+	width: 25%;
+}
+@media (max-width: 768px) {
+	.changeHeightFromFood {
+		width: 75%;
+	}
+}

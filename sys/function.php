@@ -46,5 +46,9 @@ function validateData($data)
    $data = trim($data);
    $data = stripslashes($data);
    $data = htmlspecialchars($data);
+   $data = ucfirst($data);
    return $data;
 }
+
+
+// voir pour faire une fonction qui récupère le GET et qui supprime les autres paramètres

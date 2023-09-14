@@ -53,14 +53,16 @@ if ($selectProfil->profil_default_reservation != NULL) {
    <div class="modal-dialog">
       <div class="modal-content" style="background-color: #f5cb5c;">
          <div class="modal-body">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="d-flex flex-row-reverse">
+               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
             <form method="get" class=" d-flex flex-column ">
                <label class="mb-3 mx-auto">
                   Choisissez une date de réservation
                </label>
                <div class="d-flex gap-2 justify-content-center">
                   <input class="form-control" type="date" id="calendar" name="calendar" max="<?= $dateEnd ?>" min="<?= $dateCurrent ?>">
-                  <input class="btn" id="validate_calendar" type="button" value="Valider" style="background-color: #333533 ;color: #e8eddf;">
+                  <input class="btn button-validate" id="validate_calendar" type="button" value="Valider" style="background-color: #333533 ;color: #e8eddf;">
                </div>
             </form>
 
@@ -68,18 +70,18 @@ if ($selectProfil->profil_default_reservation != NULL) {
                <div id="first_part" class="d-flex flex-column align-items-center">
                   <h3 class="mt-2">Repas du midi</h3>
                   <div class="my-2" id="part_1">
-                     <button style="background-color: #333533 ;color: #e8eddf;" class="btn" id="button_calendar_part1" name="button_calendar" value="11h">11h</button>
-                     <button style="background-color: #333533 ;color: #e8eddf;" class="btn" id="button_calendar_part1" name="button_calendar" value="12h">12h</button>
-                     <button style="background-color: #333533 ;color: #e8eddf;" class="btn" id="button_calendar_part1" name="button_calendar" value="13h">13h</button>
+                     <button class="btn button-validate" id="button_calendar_part1" name="button_calendar" value="11h">11h</button>
+                     <button class="btn button-validate" id="button_calendar_part1" name="button_calendar" value="12h">12h</button>
+                     <button class="btn button-validate" id="button_calendar_part1" name="button_calendar" value="13h">13h</button>
                   </div>
                </div>
 
                <div id="second_part" class="d-flex flex-column align-items-center">
                   <h3 class="mt-2">Repas du soir</h3>
                   <div class="my-2" id="part_2">
-                     <button style="background-color: #333533 ;color: #e8eddf;" class="btn" id="button_calendar_part2" name="button_calendar" value="18h">18h</button>
-                     <button style="background-color: #333533 ;color: #e8eddf;" class="btn" id="button_calendar_part2" name="button_calendar" value="19h">19h</button>
-                     <button style="background-color: #333533 ;color: #e8eddf;" class="btn" id="button_calendar_part2" name="button_calendar" value="20h">20h</button>
+                     <button class="btn button-validate" id="button_calendar_part2" name="button_calendar" value="18h">18h</button>
+                     <button class="btn button-validate" id="button_calendar_part2" name="button_calendar" value="19h">19h</button>
+                     <button class="btn button-validate" id="button_calendar_part2" name="button_calendar" value="20h">20h</button>
                   </div>
                </div>
             </div>
@@ -247,7 +249,9 @@ if ($selectProfil->profil_default_reservation != NULL) {
                button.addEventListener('click', (event) => {
                   const numberReservation1 = document.getElementById('input_get_number1').value
                   part1 = 1
-                  if (inputNumber.value > numberReservation1) {
+                  if (inputNumber.value < 0) {
+                     alert('Vous ne pouvez pas réserver pour moins de 0 personne !')
+                  } else if (inputNumber.value > numberReservation1) {
                      alert('Vous ne pouvez pas réserver plus de personne que le nombre de réservation possible !')
                   } else if (inputNumber.value > 25) {
                      alert('Vous ne pouvez pas réserver pour plus de 25 personne !')

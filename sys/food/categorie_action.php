@@ -1,4 +1,6 @@
 <?php
+require_once './sys/db.php';
+require_once './Controllers/CategorieController.php';
 $reqVerifyCategorie = $pdo->prepare('SELECT COUNT(categorie_name) AS numberCategorie FROM categorie');
 $reqVerifyCategorie->execute();
 $verifyCategorie = $reqVerifyCategorie->fetch();
@@ -22,30 +24,31 @@ if ($verifyCategorie->numberCategorie < 1) {
 // Sub Categorie
 
 if (isset($_POST['categorie_add_validate'])) {
-   if (empty($_POST['categorie_name'])) {
-      $errors['empty_categorie_name'] = "Vous n'avez pas donné de nom à la catégorie";
-   } else {
-      $reqVerifyCategorieInsert = $pdo->prepare('SELECT * FROM sub_categorie WHERE sub_categorie_name = ?');
-      $reqVerifyCategorieInsert->execute([ucfirst($_POST['categorie_name'])]);
-      $verifyCategorieInsert = $reqVerifyCategorieInsert->fetch();
-      if (!$verifyCategorieInsert) {
-         $reqInsertCategorie = $pdo->prepare('INSERT INTO sub_categorie SET sub_categorie_name = ?, categorie_id = ?');
-         $reqInsertCategorie->execute([ucfirst($_POST['categorie_name']), $_POST['categorie_select']]);
-         $_SESSION['flash']['success'] = 'La categorie a été ajoutée';
-      } else {
-         $errors['add_categorie'] = "La catégorie existe déja";
-      }
-   }
+   $categorieAdd = new CategorieController($_POST['categorie_name'], $_POST['categorie_select'], $pdo);
+   $categorieAdd->createCategorie();
 }
 
 if (isset($_POST['modify_categorie'])) {
-   $reqModifyCategorie = $pdo->prepare('UPDATE sub_categorie SET sub_categorie_name = ?, categorie_id = ? WHERE sub_categorie_id = ?');
-   $reqModifyCategorie->execute([ucfirst($_POST['categorie_name']), $_POST['modify_categorie_id'], $_GET['categorie']]);
-   // header('location: panel.php');
-   $urlLogin = "panel.php";
-   echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
+   $categoreModify = new CategorieController($_POST['categorie_name'], $_GET['categorie'], $pdo);
+   $categoreModify->modifyCategorie($_POST['modify_categorie_id']);
+   // $reqSelectCategorie = $pdo->prepare('SELECT * FROM sub_categorie WHERE sub_categorie_id = ?')->execute([$_GET['categorie']]);
+   // $reqModifyCategorie = $pdo->prepare('UPDATE sub_categorie SET sub_categorie_name = ?, categorie_id = ? WHERE sub_categorie_id = ?');
+
+   // if (!empty($_POST['categorie_name']) || $_POST['modify_categorie_id'] != $_GET['categorie']) {
+   //    $reqModifyCategorie->execute([ucfirst($_POST['categorie_name']), $_POST['modify_categorie_id'], $_GET['categorie']]);
+   //    $_SESSION['flash']['success'] = 'La catégorie ' . ucfirst($_POST['categorie_name']) . ' a été modifié';
+   //    header('refresh:3;url=panel.php');
+   // } else {
+   //    $errors['modify_categorie'] = "Vous n'avez pas modifié la catégorie";
+   //    header('refresh:3;url=panel.php');
+   // }
+
+   // $urlLogin = "panel.php";
+   // echo '<script type="text/javascript"> window.location.href="' . $urlLogin . '";</script>';
    // unset($_GET['categorie']);
+
 }
+
 
 if (!empty($_POST['checkbox_categorie_delete'])) {
    $listNameCategorie = array();
@@ -69,7 +72,7 @@ if (isset($_POST['delete_categorie'])) {
          if (!$verifyDishesCategorie) {
             $reqDeleteCategorie = $pdo->prepare('DELETE FROM sub_categorie WHERE sub_categorie_id = ?');
             $reqDeleteCategorie->execute([$categorieDelete]);
-            $errors['categorie_delete'] .= 'Catégorie supprimé : ' . $listNameCategorie[$i] . '<br>';
+            $_SESSION['flash']['danger'] = 'Catégorie supprimé : ' . $listNameCategorie[$i] . '<br>';
          } else {
             $errors['no_delete_categorie'] = "Vous ne pouvez pas supprimer la catégorie " . $listNameCategorie[$i] . " car elle contient des plats";
          }

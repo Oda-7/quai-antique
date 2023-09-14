@@ -3,11 +3,10 @@
 
 <form method="post" class="d-flex flex-column justify-content-center align-items-center " enctype="multipart/form-data">
    <div class="d-flex flex-column align-items-center flex-wrap">
-      <label class="btn p-2" style="background-color: #333533 ;color: #e8eddf;" for="image_uploads">Choisissez des image (PNG, JPG)</label>
+      <label class="btn p-2 d-flex flex-wrap" style="background-color: #242423 ;color: #e8eddf;" for="image_uploads">Choisissez des image (PNG, JPG)</label>
       <input class="" type="file" id="image_uploads" name="image_uploads[]" accept=".jpg, .jpeg, .png" multiple />
    </div>
-   <br>
-   <input class="btn mb-2" style="background-color: #333533 ;color: #e8eddf;" type="submit" value="Enregistrer">
+   <input class="btn mb-2 button-validate" type="submit" value="Enregistrer">
    <div id="preview" class="d-inline-flex flex-wrap justify-content-center align-items-center gap-3">
       <p>Aucun fichier selectionné</p>
    </div>
@@ -27,7 +26,7 @@ if (!is_dir('./images/image_base')) {
 $openFiles = opendir('./images/image_base');
 $uploadDir = './images/image_base';
 ?>
-<form method="post" id="formImage" class="d-flex flex-column-reverse align-items-center  my-3 gap-3">
+<form method="post" id="formImage" class="d-flex flex-column-reverse justify-content-center  my-3 gap-3">
    <?php
    // formulaire d'image
    if (readdir($openFiles)) {
@@ -41,7 +40,7 @@ $uploadDir = './images/image_base';
                $haveImage = true;
                echo '<div class="d-flex flex-column align-items-center">
                   <input  type="checkbox" name="path_image[]" id="path_image" value="' . $pathImageRead . '">
-                  <img  style="width:20rem;" src="' . $pathImageRead . '" title="' . $files_current . '">
+                  <img  style="width:18rem;" src="' . $pathImageRead . '" title="' . $files_current . '">
                </div>';
             }
          }
@@ -56,9 +55,9 @@ $uploadDir = './images/image_base';
    if (isset($haveImage)) {
       echo "<div class='d-flex flex-column align-items-center gap-3'>
       <label class='text-center'><b>Cliquer au dessus de l'image pour donner un ordre d'image sur la page d'acceuil (entre 1 et 6) </b></label>";
-      echo '<input type="submit" class="btn" style="background-color: #333533 ;color: #e8eddf;" name="delete_img" value="Supprimer un image">';
+      echo '<input type="submit" class="btn button-cancel" name="delete_img" value="Supprimer un image">';
       echo '<label>Ordonner vos images pour la page d\'acceuil :</label>
-      <input type="submit" class="btn overflow-auto" style="background-color: #333533 ;color: #e8eddf;" id="select_position" name="select_position" value="Ordonner">
+      <input type="submit" class="btn button-validate" id="select_position" name="select_position" value="Ordonner">
       </div>';
    } ?>
 </form>

@@ -20,6 +20,7 @@ reconnect_from_cookie();
    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.css">
    <link rel="stylesheet" href="./style/font.css">
    <link rel="stylesheet" href="./style/panel.css">
+   <link rel="stylesheet" href="./style/global.css">
 </head>
 
 <body class="d-flex flex-column" style="background-color: #f5cb5c; ">

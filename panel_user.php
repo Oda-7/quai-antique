@@ -23,8 +23,12 @@ if (isset($_POST['validate_info'])) {
    if (empty($_POST['profil_firstname']) || empty($_POST['profil_lastname']) || empty($_POST['profil_age'])) {
       $errors['empty_input'] = "Les champs du formulaire ne peuvent pas être vide";
    } else {
-      $reqUpdateProfil = $pdo->prepare('UPDATE profil SET profil_firstname = ?, profil_lastname = ?, profil_age = ?, profil_civility = ? WHERE profil_id = ?');
-      $reqUpdateProfil->execute([$_POST['profil_firstname'], $_POST['profil_lastname'], $_POST['profil_age'], $_POST['profil_civility'], $selectProfil->profil_id]);
+      if ($_POST['profil_age'] > 110) {
+         $errors['profil_age'] = "Vous ne pouvez pas avoir plus de 110 ans";
+      } else {
+         $reqUpdateProfil = $pdo->prepare('UPDATE profil SET profil_firstname = ?, profil_lastname = ?, profil_age = ?, profil_civility = ? WHERE profil_id = ?');
+         $reqUpdateProfil->execute([$_POST['profil_firstname'], $_POST['profil_lastname'], $_POST['profil_age'], $_POST['profil_civility'], $selectProfil->profil_id]);
+      }
    }
 
    if (empty($_POST['profil_email']) || !filter_var($_POST['profil_email'], FILTER_VALIDATE_EMAIL)) {
@@ -72,7 +76,7 @@ if (isset($_POST['validate_info'])) {
 
       $urlLogin = 'panel_user.php';
       // echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
-      header('Refresh:10');
+      header('Refresh:3');
    }
 }
 // var_dump($_SESSION['flash']);
@@ -107,7 +111,7 @@ endif;
    <div id="profil_user" class=" container d-flex flex-column align-items-center  py-5 mt-5">
 
       <div id="info_user" class=" d-flex flex-column align-items-center border border-dark border-2 rounded-3 my-3 py-4  px-3" style="background-color: #333533 ;color: #e8eddf;">
-         <h3>Bonjour <?= $selectProfil->profil_civility . ' ' . $selectProfil->profil_firstname ?></h3>
+         <h3>Bonjour <?= $selectProfil->profil_civility . ' ' . $selectProfil->profil_lastname ?></h3>
          <h4>Vos informations</h4>
          <div class="d-flex gap-2">
             <label>Civilité :</label>

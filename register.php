@@ -38,6 +38,8 @@ if (!empty($_POST)) {
 
    if (empty($_POST['age']) || !preg_match('/^[0-9]{2}/', $_POST['age'])) {
       $errors['age'] = "L'age n'est pas valide";
+   } elseif ($_POST['age'] > 110) {
+      $errors['age'] = "Vous ne pouvez pas avoir plus de 110 ans";
    }
 
    if (empty($_POST['email']) || !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
@@ -94,7 +96,7 @@ if (!empty($_POST)) {
          $mail->isSMTP();                                            //Send using SMTP
          $mail->Host       = 'smtp.gmail.com';                     //Set the SMTP server to send through
          $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
-         $mail->Username   = $username_m;                             //SMTP username
+         $mail->Username   = $username_m;                            //SMTP username
          $mail->Password   = $secret_m;                               //SMTP password
          $mail->SMTPSecure = 'TLS';      // STARTTLS pour outlook      //Enable implicit TLS encryption
          $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`

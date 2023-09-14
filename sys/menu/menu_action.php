@@ -15,7 +15,6 @@ if (isset($_POST["validate_add_menu"])) {
          if (
             $_POST['menu_entrées'] != 'null'
             && $_POST['menu_plats'] != 'null'
-            && $_POST['menu_fromages'] != 'null'
             && $_POST['menu_desserts'] != 'null'
          ) {
             echo 'insertion entrée plat dessert et fromage';
@@ -36,7 +35,6 @@ if (isset($_POST["validate_add_menu"])) {
             }
          } elseif (
             $_POST['menu_plats'] != 'null'
-            && $_POST['menu_fromages'] != 'null'
             && $_POST['menu_desserts'] != 'null'
          ) {
             echo 'insertion plat dessert et fromage';
@@ -75,8 +73,8 @@ if (isset($_POST["validate_add_menu"])) {
          } else {
             $errors['dishes_no_select'] = "Vous n'avez pas choisis les plats nécessaire pour un menu<br>
             (Entrée - Plat) <br>
-            (Plat - Dessert - Fromage) <br>
-            (Entrée - Plat - Dessert - Fromage)
+            (Plat - Dessert) <br>
+            (Entrée - Plat - Dessert)
             ";
          }
          // header('location: panel.php');
@@ -91,23 +89,27 @@ if (isset($_POST["validate_add_menu"])) {
 // delete Menu
 $reqSelectMenuDelete = $pdo->prepare('SELECT * FROM menu WHERE menu_id = ?');
 if (isset($_POST['delete_menu'])) {
-   echo "Voulez vous supprimer les menu :
-   <form method='post' class='d-flex flex-wrap flex-column align-items-center py-2 gap-2'>";
-   foreach ($_POST["checkbox_delete_menu"] as $post => $postIdMenuDelete) {
-      echo '<input name="id_menu_delete[]" type="hidden" value="' . $postIdMenuDelete . '"> ';
-      $reqSelectMenuDelete->execute([$postIdMenuDelete]);
-      $selectMenuDelete = $reqSelectMenuDelete->fetch();
-      echo $selectMenuDelete->menu_title . "<br>";
+   if (empty($_POST["checkbox_delete_menu"])) {
+      $errors['checkbox_delete_menu'] = "Vous n'avez pas coché de menu";
+   } else {
+      echo "Voulez vous supprimer les menu :
+      <form method='post' class='d-flex flex-wrap flex-column align-items-center py-2 gap-2'>";
+      foreach ($_POST["checkbox_delete_menu"] as $post => $postIdMenuDelete) {
+         echo '<input name="id_menu_delete[]" type="hidden" value="' . $postIdMenuDelete . '"> ';
+         $reqSelectMenuDelete->execute([$postIdMenuDelete]);
+         $selectMenuDelete = $reqSelectMenuDelete->fetch();
+         echo $selectMenuDelete->menu_title . "<br>";
+      }
+      echo '<input class="btn button-cancel" id="cancel_delete" type="button" value="Annuler">
+         <input class="btn button-validate" name="validate_delete_menu" type="submit" value="valider">
+      </form>';
    }
-   echo '<input class="btn" style="background-color: #242423 ;color: #e8eddf;" name="validate_delete_menu" type="submit" value="valider">
-   </form>';
 }
 
 if (isset($_POST['validate_delete_menu'])) {
    $errors['text_delete_menu'] = "Vous venez de supprimer le(s) menu(s) : ";
 
    $reqFetchHaveDishesMenuDay = $pdo->prepare('SELECT * FROM have_menu WHERE menu_id = ?');
-
    $reqDeleteHaveMenu = $pdo->prepare('DELETE FROM have_menu WHERE menu_id = ?');
    $reqSelectMenuDay = $pdo->prepare('SELECT * FROM menu WHERE menu_id = ?');
 
@@ -187,8 +189,9 @@ if (isset($_POST['validate_menu_day'])) {
          }
 
          $countGoodInsertDishe = 0;
-         echo '<form method="post" class="d-flex flex-wrap flex-column align-items-center py-2 gap-2">';
+         echo '<form method="post" class="changeHeightFromFood bg-secondary p-3 text-white rounded ms-5 ms-sm-auto me-2 me-sm-5 me-md-auto d-flex flex-wrap flex-column align-items-center py-2 gap-2">';
          foreach ($foodMenuDayDishe as $k => $foodDishe) {
+            // echo 'la';
             // insérer les plats , liaison plat et menu
             $reqVerifyDishesMenuDay = $pdo->prepare('SELECT * FROM dishes WHERE dishes_name = ?');
             $reqVerifyDishesMenuDay->execute([$nameMenuDayDishe[$countGoodInsertDishe][1]]);
@@ -245,7 +248,8 @@ if (isset($_POST['validate_menu_day'])) {
 
          if (!$verifyFoodMenuDay) {
             // si les aliments n'existe pas et que l'on doit ajouter des allergènes
-            echo '<input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="validate_allergic_food_menu_day" value="Ajouter">';
+            echo '<input class="btn button-validate" type="submit" name="validate_allergic_food_menu_day" value="Ajouter">
+            <input class="btn button-cancel" id="cancel_delete" type="button" value="Annuler">';
          }
          echo '</form>';
          if (!empty($_POST['menu_day_vins'])) {
@@ -346,6 +350,7 @@ if (isset($_POST["validate_modify_menu"])) {
          (Plat - Dessert)";
    }
 }
+
 
 if (isset($_POST['validate_modify_menu_day'])) {
    // modify menu day
@@ -477,7 +482,7 @@ if (isset($_POST['validate_modify_menu_day'])) {
       $reqUpdateDishesFood = $pdo->prepare('UPDATE dishes SET dishes_food = ? WHERE dishes_id = ?');
       $newFood = false;
 
-      echo '<form method="post" d-flex flex-wrap flex-column align-items-center py-2 gap-2>';
+      echo '<form method="post" class="changeHeightFromFood bg-secondary p-3 text-white ms-5 ms-sm-auto me-2 me-sm-5 me-md-auto d-flex flex-wrap flex-column align-items-center py-2 gap-2">';
       $arrayNewFoodDishes = array();
       foreach ($arrayModifyUpdateDishes as $d => $dishesUpdate) {
 
@@ -673,15 +678,15 @@ if (isset($_POST['validate_modify_menu_day'])) {
    // faire une condition s'il y a un nouveau aliment , 
    // s'il n'y en pas reload la page
    if ($newFood == true) {
-      echo '<input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="modify_food_dishes_menu_day" value="Ajouter">';
+      echo '<input class="btn button-validate" type="submit" name="modify_food_dishes_menu_day" value="Ajouter">';
    } else {
       // header('location: panel.php', false);
-      $urlLogin = "panel.php";
-      echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
+      // $urlLogin = "panel.php";
+      // echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
    }
    echo '</form>';
-   $urlLogin = "panel.php";
-   echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
+   // $urlLogin = "panel.php";
+   // echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
 }
 
 if (isset($_POST["modify_food_dishes_menu_day"])) {

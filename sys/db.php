@@ -1,5 +1,5 @@
 <?php
-
+include './sys/info_db.php';
 
 
 // Table utilisateur
@@ -83,28 +83,28 @@ $createTableImage = "CREATE TABLE IF NOT EXISTS images(
 // Table nourriture
 
 $createAllergicTable = 'CREATE TABLE IF NOT EXISTS allergic(
-   allergic_id INT AUTO_INCREMENT,
-   allergic_name VARCHAR(50) NOT NULL,
-   allergic_food TEXT NOT NULL,
-   PRIMARY KEY(allergic_id)
-);';
+      allergic_id INT AUTO_INCREMENT,
+      allergic_name VARCHAR(50) NOT NULL,
+      allergic_food TEXT NOT NULL,
+      PRIMARY KEY(allergic_id)
+   );';
 
 $createFoodTable = 'CREATE TABLE IF NOT EXISTS food(
-   food_id INT AUTO_INCREMENT ,
-   food_name VARCHAR(50) NOT NULL,
-   food_origin VARCHAR(255),
-   food_breeding INT,
-   PRIMARY KEY(food_id)
-);';
+      food_id INT AUTO_INCREMENT ,
+      food_name VARCHAR(50) NOT NULL,
+      food_origin VARCHAR(255),
+      food_breeding INT,
+      PRIMARY KEY(food_id)
+   );';
 
 
 $createFoodAllergicTable = 'CREATE TABLE IF NOT EXISTS food_allergic(
-   food_id INT NOT NULL,
-   allergic_id INT NOT NULL,
-   PRIMARY KEY(food_id, allergic_id),
-   FOREIGN KEY(food_id) REFERENCES food(food_id),
-   FOREIGN KEY(allergic_id) REFERENCES allergic(allergic_id)
-);';
+      food_id INT NOT NULL,
+      allergic_id INT NOT NULL,
+      PRIMARY KEY(food_id, allergic_id),
+      FOREIGN KEY(food_id) REFERENCES food(food_id),
+      FOREIGN KEY(allergic_id) REFERENCES allergic(allergic_id)
+   );';
 
 
 $createDischesTable = 'CREATE TABLE IF NOT EXISTS dishes(
@@ -159,15 +159,9 @@ $createHaveMenuTable = 'CREATE TABLE IF NOT EXISTS have_menu(
    PRIMARY KEY(menu_id, dishes_id),
    FOREIGN KEY(menu_id) REFERENCES menu(menu_id),
    FOREIGN KEY(dishes_id) REFERENCES dishes(dishes_id)
-);
-';
+);';
+// var_dump($host_name, $database, $user_name, $password);
 
-$createRole = [
-   'membre',
-   'admin'
-];
-
-include './sys/info_db.php';
 
 try {
    $pdo = new PDO("mysql:host=$host_name; dbname=$database;", $user_name, $password);
@@ -196,14 +190,19 @@ try {
    echo "Connection échoué: " . $e->getMessage();
 }
 
-foreach ($createRole as $role) {
-   $reqInsertRole = $pdo->prepare('INSERT INTO role SET role_name = ?');
+$createRole = [
+   'membre',
+   'admin'
+];
 
-   $reqSelectRole = $pdo->prepare('SELECT * FROM role WHERE role_name = ?');
-   $reqSelectRole->execute([$role]);
-   $selectRole = $reqSelectRole->fetch();
+// foreach ($createRole as $role) {
+//    $reqInsertRole = $pdo->prepare('INSERT INTO role SET role_name = ?');
 
-   if (!$selectRole) {
-      $reqInsertRole->execute([$role]);
-   }
-}
+//    $reqSelectRole = $pdo->prepare('SELECT * FROM role WHERE role_name = ?');
+//    $reqSelectRole->execute([$role]);
+//    $selectRole = $reqSelectRole->fetch();
+
+//    if (!$selectRole) {
+//       $reqInsertRole->execute([$role]);
+//    }
+// }

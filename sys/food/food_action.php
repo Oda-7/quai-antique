@@ -1,4 +1,5 @@
 <?php
+require_once './sys/db.php';
 
 if (isset($_POST["validate_add_food"])) {
    if (!empty($_POST['add_food_name'])) {
@@ -17,9 +18,10 @@ if (isset($_POST["validate_add_food"])) {
             $reqAddFood = $pdo->prepare('INSERT INTO food SET food_name = ? ');
             $reqAddFood->execute([ucfirst($_POST['add_food_name'])]);
          }
+         $_SESSION['flash']['success'] = "L'aliment " . ucfirst($_POST['add_food_name']) . " a été ajouté";
          // header('location: panel.php');
-         $urlLogin = "panel.php";
-         echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
+         // $urlLogin = "panel.php";
+         // echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
       } else {
          $errors['verify_food'] = "L'aliment existe déjà";
       }

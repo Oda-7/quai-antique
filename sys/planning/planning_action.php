@@ -49,7 +49,7 @@ if (isset($_POST['submit_validate'])) {
          $hoursDaytimeClose = $secondHoursFormatClose;
          $daytime = $day->planning_name;
 
-         array_push($errors, "Vous allez ouvrir toute la journée " . $day->planning_name);
+         // array_push($errors, "Vous allez ouvrir toute la journée " . $day->planning_name);
 
          $hoursOpenDaytimeinsert = $pdo->prepare('UPDATE planning SET planning_hours_open = ?, planning_second_hours_close = ?, planning_close = NULL WHERE planning_name = ?');
          $hoursOpenDaytimeinsert->execute([$hoursDaytimeOpen, $hoursDaytimeClose, $daytime]);
@@ -92,10 +92,11 @@ if (isset($_POST['submit_validate'])) {
       }
    }
    $urlLogin = "panel.php";
-   echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
+   $_SESSION['flash']['success'] = "Le planning a bien été modifié";
 }
 
-function hoursAm($h)
+//Hours Am
+function hoursAmFirstPart($h)
 {
    if (!empty($h)) {
       echo '<option value="' . $h . '" selected>' . $h . '</option>';
@@ -103,13 +104,29 @@ function hoursAm($h)
       echo '<option value="NULL" selected>--</option>';
    }
 
-   for ($hours = 8; $hours < 16; $hours++) {
+   for ($hours = 8; $hours < 14; $hours++) {
+      echo '<option value="' . $hours . '">' . $hours . '</option>';
+   }
+
+   echo '<option value="NULL">--</option>';
+}
+
+function hoursAmSecondPart()
+{
+   if (!empty($h)) {
+      echo '<option value="' . $h . '" selected>' . $h . '</option>';
+   } else {
+      echo '<option value="NULL" selected>--</option>';
+   }
+   for ($hours = 12; $hours < 17; $hours++) {
       echo '<option value="' . $hours . '">' . $hours . '</option>';
    }
    echo '<option value="NULL">--</option>';
 }
 
-function hoursPm($h)
+
+//Hours PM
+function hoursPmFirstPart($h)
 {
    if (!empty($h)) {
       echo '<option value="' . $h . '" selected>' . $h . '</option>';
@@ -119,11 +136,29 @@ function hoursPm($h)
 
 
 
-   for ($hours = 15; $hours < 24; $hours++) {
+   for ($hours = 16; $hours < 20; $hours++) {
       echo '<option value="' . $hours . '">' . $hours . '</option>';
    }
    echo '<option value="NULL">--</option>';
 }
+
+function hoursPmSecondPart($h)
+{
+   if (!empty($h)) {
+      echo '<option value="' . $h . '" selected>' . $h . '</option>';
+   } else {
+      echo '<option value="NULL" selected>--</option>';
+   }
+
+
+
+   for ($hours = 19; $hours < 24; $hours++) {
+      echo '<option value="' . $hours . '">' . $hours . '</option>';
+   }
+   echo '<option value="NULL">--</option>';
+}
+
+//Minutes
 function minute($m)
 {
    $minute = [00, 15, 30, 45];

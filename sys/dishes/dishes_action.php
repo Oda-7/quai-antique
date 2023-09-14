@@ -1,7 +1,15 @@
 <?php
+if (session_status() == PHP_SESSION_NONE) {
+   session_start();
+}
+require_once './sys/dishes/db_dishes.php';
+require_once './sys/allergic/db_allergic.php';
+require_once './sys/db.php';
 
-include './sys/dishes/db_dishes.php';
-include './sys/allergic/db_allergic.php';
+// if (session_status() == PHP_SESSION_NONE) {
+// session_start();
+// }
+$reqSelectNameFood = $pdo->prepare('SELECT * FROM food WHERE food_id = ?');
 
 
 // Ajout de plat et d'aliments
@@ -25,8 +33,8 @@ if (isset($_POST['validate_add_dishes'])) {
          $newListFood = [];
          $arrayIdFood = [];
 
-
-         echo '<form method="post" class="d-flex flex-wrap flex-column align-items-center py-2 gap-2">';
+         // var_dump($formDishes);
+         echo '<div><form method="post" class="changeHeightFromFood bg-secondary p-3 text-white ms-5 ms-sm-auto me-2 me-sm-5 me-md-auto d-flex flex-wrap flex-column align-items-center py-2 gap-2">';
          foreach ($arrayFood as $i => $food) {
             $reqFood = $pdo->prepare('SELECT * FROM food WHERE food_name = ? ');
             $food = trim(ucfirst($food));
@@ -60,13 +68,13 @@ if (isset($_POST['validate_add_dishes'])) {
             }
          }
          if (isset($buttonAdd) && $buttonAdd) {
-            echo '<input class="btn" style="background-color: #242423 ;color: #e8eddf;" class="form-control" name="add_food_allergic" type="submit" value="Valider">';
+            echo '<input class="btn" style="background-color: #242423;color: #e8eddf;" class="form-control" name="add_food_allergic" type="submit" value="Valider">';
          } else {
             // header('location: panel.php', true);
             $urlLogin = "panel.php";
             echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
          }
-         echo '</form>';
+         echo '</form><div>';
 
          $implodeFood = implode(', ', $newListFood);
 
@@ -78,17 +86,23 @@ if (isset($_POST['validate_add_dishes'])) {
             $reqInsertDishes->execute([ucfirst($formDishes[0]), ucfirst($implodeFood), $formDishes[2]]);
          }
          $idDishes = $pdo->lastInsertId();
-
+         echo 'la';
          foreach ($arrayIdFood as $idFood) {
             $reqInsertHaveFood = $pdo->prepare("INSERT INTO have_food SET food_id = ?, dishes_id = ?");
             $reqInsertHaveFood->execute([$idFood, $idDishes]);
          }
+         $_SESSION['flash']['success'] .= "Vous avez ajouté Le plat " . ucfirst($_POST['dishes_name']) . "<br>";
       }
+      // header('refresh: 3; url=panel.php');
    }
 }
 
+
+// Ajout d'aliments avec leurs spécificités
 if (isset($_POST['add_food_allergic'])) {
    foreach ($_POST['food_id'] as $i => $idAddFood) {
+      $reqSelectNameFood->execute([$idAddFood]);
+      $selectNameFood = $reqSelectNameFood->fetch();
       $postOrigin = ucfirst($_POST["add_food_origin"][$i]);
       if (!empty($_POST["add_food_origin"][$i]) && $_POST["add_food_breeding"][$i] != 'null') {
          $reqUpdateFood = $pdo->prepare('UPDATE food SET food_origin = ?, food_breeding = ? WHERE food_id = ?');
@@ -96,111 +110,270 @@ if (isset($_POST['add_food_allergic'])) {
       } elseif (!empty($_POST["add_food_origin"][$i])) {
          $reqUpdateFood = $pdo->prepare('UPDATE food SET food_origin = ? WHERE food_id = ?');
          $reqUpdateFood->execute([$postOrigin, $idAddFood]);
-
-         //test de ce matin concluant testé a nouveau sur un autre plat
       }
+
+      $_SESSION['flash']['success'] .= "Vous avez ajouté l'aliment " . ucfirst($selectNameFood->food_name) . "<br>";
    }
 
-   $reqErrorFood = $pdo->prepare('SELECT * FROM food WHERE food_id = ?');
+   $reqErrorFood = $pdo->prepare('SELECT * FROM food_allergic WHERE food_id = ?');
    foreach ($_POST['allergic_select'] as $i => $idAllergic) {
-      if ($idAllergic == 'null') {
-         $reqErrorFood->execute([$_POST['food_id'][$i]]);
-         $errorFood = $reqErrorFood->fetch();
-         $_SESSION['flash']['danger'] .= "Vous n'avez pas ajouté d'allergène pour l'aliment " . $errorFood->food_name . '<br>';
-      } else {
-         $reqInsertFoodAllergic = $pdo->prepare('INSERT INTO food_allergic SET food_id = ?, allergic_id = ?');
-         $reqInsertFoodAllergic->execute([$_POST['food_id'][$i], $idAllergic]);
+      $reqErrorFood->execute([$_POST['food_id'][$i]]);
+      $errorFood = $reqErrorFood->fetch();
+      if (!$errorFood) {
+         if ($idAllergic != 'null') {
+            $reqInsertFoodAllergic = $pdo->prepare('INSERT INTO food_allergic SET food_id = ?, allergic_id = ?');
+            $reqInsertFoodAllergic->execute([$_POST['food_id'][$i], $idAllergic]);
+            // $_SESSION['flash']['success'] .= "Vous avez ajouté un allergène pour l'aliment " . $errorFood->food_name . '<br>';
+         }
       }
    }
 }
 
+// Modification de plat et d'aliments
+$inputDisplay = false;
 if (isset($_POST['modify_dishes'])) {
    $reqVerifyDishes = $pdo->prepare('SELECT * FROM dishes WHERE dishes_id = ?');
+   $reqVerifyWhereDishes = $pdo->prepare('SELECT food_id FROM have_food WHERE dishes_id = ?');
+   $selectFoodDishesVerify = $pdo->prepare('SELECT food_name  FROM food WHERE food_id = ?');
+   $reqCheckFood = $pdo->prepare('SELECT * FROM food WHERE food_name = ?');
+   $reqVerifyHaveFood = $pdo->prepare('SELECT * FROM have_food WHERE food_id = ? AND dishes_id = ?;');
+   $reqInsertFood = $pdo->prepare('INSERT INTO food SET food_name = ?');
+   $reqInsertHaveFood = $pdo->prepare("INSERT INTO have_food SET food_id = ?, dishes_id = ?");
+   $reqDeleteHaveFood = $pdo->prepare('DELETE FROM have_food WHERE food_id = ? AND dishes_id = ?');
+   $reqUpdateDishes = $pdo->prepare('UPDATE dishes SET dishes_name = ?, dishes_description = ?, dishes_food = ?, sub_categorie_id = ? WHERE dishes_id = ?');
+
    $reqVerifyDishes->execute([$_GET['dishes']]);
    $verifyDishes = $reqVerifyDishes->fetch();
+   $reqVerifyWhereDishes->execute([$_GET['dishes']]);
+   $verifyWhereDishes = $reqVerifyWhereDishes->fetchAll();
+   $listExplodeVerifyDishesFood = [];
+   $listExplodePostDishesFood = [];
+   $listForm = explode(',', trim($_POST['modify_dishes_food']));
+   foreach ($listForm as $i => $form) {
+      array_push($listExplodePostDishesFood, ucfirst(trim($form)));
+   }
+
+   $formDisplay = 'd-none';
+
+   foreach ($verifyWhereDishes as $verifyWhereDishesFood) {
+      //verifications des aliments du plat
+      $selectFoodDishesVerify->execute([$verifyWhereDishesFood->food_id]);
+      $foodDishesVerify = $selectFoodDishesVerify->fetch();
+      array_push($listExplodeVerifyDishesFood, $foodDishesVerify->food_name);
+   }
+   // $_SESSION['flash']['success'] = "holla";
+
    if (
       $verifyDishes->dishes_name != $_POST['modify_dishes_name']
       || $verifyDishes->dishes_description != $_POST['modify_dishes_description']
-      || $verifyDishes->dishes_food != $_POST['modify_dishes_food']
+      || $listExplodeVerifyDishesFood != $listExplodePostDishesFood
       || $verifyDishes->sub_categorie_id != $_POST['modify_sub_categorie_dishes']
    ) {
-      $listExplodeVerifyDishesFood = explode(',', $verifyDishes->dishes_food);
-      $listExplodePostDishesFood = explode(',', $_POST['modify_dishes_food']);
-      $reqCheckFood = $pdo->prepare('SELECT * FROM food WHERE food_name = ?');
-      $reqVerifyHaveFood = $pdo->prepare('SELECT * FROM have_food WHERE food_id = ?');
+      if (count($listExplodePostDishesFood) > count($listExplodeVerifyDishesFood)) {
+         // si il y a plus d'aliments dans le formulaire que dans le plats
+         foreach ($listExplodePostDishesFood as $i => $postDishesFood) {
+            $postDishesFood = ucfirst(trim($postDishesFood));
+            $reqCheckFood->execute([$postDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            if (!$checkFood) {
+               $inputDisplay = true;
+            }
+         }
 
-      echo '<form method="post" class="d-flex flex-wrap flex-column align-items-center py-2 gap-2">';
-      foreach ($listExplodePostDishesFood as $i => $postDishesFood) {
-         $postDishesFood = ucfirst(trim($postDishesFood));
-         $listVerifyDishesFood = ucfirst(trim($listExplodeVerifyDishesFood[$i]));
+         if ($inputDisplay) {
+            echo '<form method="post" class="changeHeightFromFood bg-secondary p-3 text-white ms-5 ms-sm-auto me-2 me-sm-5 me-md-auto d-flex flex-wrap flex-column align-items-center py-2 gap-2" id="form_modify">';
+         }
 
-         $reqCheckFood->execute([$postDishesFood]);
-         $checkFoodDishes = $reqCheckFood->fetch();
-         if ($postDishesFood != $listVerifyDishesFood) {
-            // Si la liste des aliment du plat et differente de la liste du formulaire
-            if (!$checkFoodDishes) {
-               // insertion d'aliment s'il n'existe pas
-               $reqInsertFood = $pdo->prepare('INSERT INTO food SET food_name = ?');
+         foreach ($listExplodePostDishesFood as $i => $postDishesFood) {
+            $postDishesFood = ucfirst(trim($postDishesFood));
+            $reqCheckFood->execute([$postDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            $reqVerifyHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+            $verifyFoodDishes = $reqVerifyHaveFood->fetch();
+
+            // insertion d'aliment s'il n'existe pas
+            if (!$checkFood) {
                $reqInsertFood->execute([ucfirst($postDishesFood)]);
                $foodId = $pdo->lastInsertId();
+               $reqInsertHaveFood->execute([$foodId, $_GET['dishes']]);
 
                echo '<input type="hidden" name="food_id_add_modify[]" value="' . $foodId . '">
-                  <label>' . ucfirst(trim($postDishesFood)) . '</label>
-                  <select class="form-select" name="allergic_select_modify[]">
-                     <option value="null">Allergènes</option>  ';
+                   <label>' . ucfirst(trim($postDishesFood)) . '</label>
+                   <select class="form-select" name="allergic_select_modify[]">
+                       <option value="null">Allergènes</option>  ';
                foreach ($allergicListBd as $allergic) {
                   echo '<option value="' . $allergic->allergic_id . '">' . $allergic->allergic_name . '</option>';
                }
                echo '</select>
-               <input class="form-control" type="text" name="modify_add_food_origin[]" placeholder="Traçabilités des produits">
-               <select class="form-select" name="modify_add_food_breeding[]">
-                  <option value="null" selected>Condition de vie</option>
-                  <option value="1">Élevage</option>
-                  <option value="2">Sauvage</option>
-               </select>';
-
-               $reqVerifyHaveFood->execute([$foodId]);
-               $verifyHaveFood = $reqVerifyHaveFood->fetch();
-               if (!$verifyHaveFood) {
-                  $reqInsertHaveFood = $pdo->prepare("INSERT INTO have_food SET food_id = ?, dishes_id = ?");
-                  $reqInsertHaveFood->execute([$foodId, $_GET['dishes']]);
+                   <input class="form-control" type="text" name="modify_add_food_origin[]" placeholder="Traçabilités des produits">
+                   <select class="form-select" name="modify_add_food_breeding[]">
+                       <option value="null" selected>Condition de vie</option>
+                       <option value="1">Élevage</option>
+                       <option value="2">Sauvage</option>
+                   </select>';
+            } else {
+               if (!$verifyFoodDishes) {
+                  $reqInsertHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
                }
             }
          }
-      }
-      echo '<input class="btn" style="background-color: #242423 ;color: #e8eddf;" type="submit" name="validate_add_food_allergic" value="Valider">
-      </form>';
 
-      $reqUpdateDishes = $pdo->prepare('UPDATE dishes SET dishes_name = ?, dishes_description = ?, dishes_food = ?, sub_categorie_id = ? WHERE dishes_id = ?');
-      $reqUpdateDishes->execute([ucfirst($_POST['modify_dishes_name']), $_POST['modify_dishes_description'], $_POST['modify_dishes_food'], $_POST['modify_sub_categorie_dishes'], $_GET['dishes']]);
+         foreach ($listExplodeVerifyDishesFood as $i => $verifyDishesFood) {
+            $reqCheckFood->execute([$verifyDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            if (in_array($verifyDishesFood, $listExplodePostDishesFood) === false) {
+               $reqDeleteHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+            }
+         }
 
-      if (count($listExplodePostDishesFood) < count($listExplodeVerifyDishesFood)) {
-         foreach ($listExplodeVerifyDishesFood as $i => $explodeDishesFood) {
-            $explodeDishesFood = ucfirst(trim($explodeDishesFood));
-            $listExplodePostDishesFood[$i] = ucfirst(trim($listExplodePostDishesFood[$i]));
-            $reqCheckFood->execute([$explodeDishesFood]);
-            $checkFoodDishes = $reqCheckFood->fetch();
+         if ($inputDisplay) {
+            echo '<input class="btn button-validate" type="submit" name="validate_add_food_allergic" value="Valider">
+           </form>';
+         } else {
+            $_SESSION['flash']['success'] = "Vous avez modifié le plat " . ucfirst($_POST['modify_dishes_name']);
+            header('refresh: 3; url=panel.php');
+         }
+      } elseif (count($listExplodePostDishesFood) < count($listExplodeVerifyDishesFood)) {
+         foreach ($listExplodeVerifyDishesFood as $i => $verifyDishesFood) {
+            $postDishesFood = ucfirst(trim($listExplodePostDishesFood[$i]));
+            if (!empty($postDishesFood)) {
+               $reqCheckFood->execute([$postDishesFood]);
+               $checkFood = $reqCheckFood->fetch();
+               if (!$checkFood) {
+                  $inputDisplay = true;
+               }
+            }
+         }
 
-            $reqVerifyHaveFood->execute([$checkFoodDishes->food_id]);
-            $verifyHaveFood = $reqVerifyHaveFood->fetch();
+         if ($inputDisplay) {
+            echo '<form method="post" class="changeHeightFromFood bg-secondary p-3 text-white ms-5 ms-sm-auto me-2 me-sm-5 me-md-auto  d-flex flex-wrap flex-column align-items-center py-2 gap-2" id="form_modify">';
+         }
 
-            if ($explodeDishesFood != $listExplodePostDishesFood[$i]) {
-               $reqDeleteHaveFood = $pdo->prepare('DELETE FROM have_food WHERE food_id = ?');
-               $reqDeleteHaveFood->execute([$verifyHaveFood->food_id]);
+         foreach ($listExplodeVerifyDishesFood as $i => $explodeVerifyFood) {
+            $postDishesFood = ucfirst(trim($listExplodePostDishesFood[$i]));
+            $reqCheckFood->execute([$postDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            $reqVerifyHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+            $verifyFoodDishes = $reqVerifyHaveFood->fetch();
+
+            if (!empty($postDishesFood) && array_search(trim(ucfirst($postDishesFood)), $listExplodeVerifyDishesFood) == false) {
+               // si l'aliment du formulaire n'existe pas dans le plat
+               if (!$checkFood) {
+                  $reqInsertFood->execute([ucfirst($postDishesFood)]);
+                  $foodId = $pdo->lastInsertId();
+                  $reqInsertHaveFood->execute([$foodId, $_GET['dishes']]);
+
+                  echo '<input type="hidden" name="food_id_add_modify[]" value="' . $foodId . '">
+                       <label>' . ucfirst(trim($postDishesFood)) . '</label>
+                       <select class="form-select" name="allergic_select_modify[]">
+                           <option value="null">Allergènes</option>  ';
+                  foreach ($allergicListBd as $allergic) {
+                     echo '<option value="' . $allergic->allergic_id . '">' . $allergic->allergic_name . '</option>';
+                  }
+                  echo '</select>
+                       <input class="form-control" type="text" name="modify_add_food_origin[]" placeholder="Traçabilités des produits">
+                       <select class="form-select" name="modify_add_food_breeding[]">
+                           <option value="null" selected>Condition de vie</option>
+                           <option value="1">Élevage</option>
+                           <option value="2">Sauvage</option>
+                       </select>';
+               } else {
+                  if (!$verifyFoodDishes) {
+                     $reqInsertHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+                  }
+               }
+            }
+         }
+
+         foreach ($listExplodeVerifyDishesFood as $i => $verifyDishesFood) {
+            $reqCheckFood->execute([$verifyDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            if (in_array($verifyDishesFood, $listExplodePostDishesFood) === false) {
+               $reqDeleteHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+            }
+         }
+
+         if ($inputDisplay) {
+            echo '<input class="btn button-validate" type="submit" name="validate_add_food_allergic" value="Valider">
+           </form>';
+         } else {
+            $_SESSION['flash']['success'] = "Vous avez modifié le plat " . ucfirst($_POST['modify_dishes_name']);
+            header('refresh: 3; url=panel.php');
+         }
+      } else {
+
+         foreach ($listExplodePostDishesFood as $i => $postDishesFood) {
+            $postDishesFood = ucfirst(trim($postDishesFood));
+            $reqCheckFood->execute([$postDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            if (!$checkFood) {
+               $inputDisplay = true;
+            }
+         }
+
+         if ($inputDisplay) {
+            echo '<form method="post" class="changeHeightFromFood bg-secondary p-3 text-white ms-5 ms-sm-auto me-2 me-sm-5 me-md-auto d-flex flex-wrap flex-column align-items-center py-2 gap-2" id="form_modify">';
+         }
+
+         foreach ($listExplodePostDishesFood as $i => $postDishesFood) {
+            $postDishesFood = ucfirst(trim($postDishesFood));
+            $reqCheckFood->execute([$postDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            $reqVerifyHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+            $verifyFoodDishes = $reqVerifyHaveFood->fetch();
+            if (!$checkFood) {
+               $reqInsertFood->execute([ucfirst($postDishesFood)]);
+               $foodId = $pdo->lastInsertId();
+               $reqInsertHaveFood->execute([$foodId, $_GET['dishes']]);
+
+               echo '<input type="hidden" name="food_id_add_modify[]" value="' . $foodId . '">
+                   <label>' . ucfirst(trim($postDishesFood)) . '</label>
+                   <select class="form-select" name="allergic_select_modify[]">
+                       <option value="null">Allergènes</option>  ';
+               foreach ($allergicListBd as $allergic) {
+                  echo '<option value="' . $allergic->allergic_id . '">' . $allergic->allergic_name . '</option>';
+               }
+               echo '</select>
+                   <input class="form-control" type="text" name="modify_add_food_origin[]" placeholder="Traçabilités des produits">
+                   <select class="form-select" name="modify_add_food_breeding[]">
+                       <option value="null" style="word-wrap: break-word; white-space: normal;" selected>Condition de vie</option>
+                       <option value="1">Élevage</option>
+                       <option value="2">Sauvage</option>
+                   </select>';
+            } else {
+               if (!$verifyFoodDishes) {
+                  $reqInsertHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
+               }
+            }
+         }
+         if ($inputDisplay) {
+            echo '<input class="btn button-validate" type="submit" name="validate_add_food_allergic" value="Valider">
+           </form>';
+         } else {
+            $_SESSION['flash']['success'] = "Vous avez modifié le plat " . ucfirst($_POST['modify_dishes_name']);
+            header('refresh: 3; url=panel.php');
+         }
+
+         foreach ($listExplodeVerifyDishesFood as $i => $verifyDishesFood) {
+            $reqCheckFood->execute([$verifyDishesFood]);
+            $checkFood = $reqCheckFood->fetch();
+            if (in_array($verifyDishesFood, $listExplodePostDishesFood) === false) {
+               $reqDeleteHaveFood->execute([$checkFood->food_id, $_GET['dishes']]);
             }
          }
       }
-   } else {
-      $errors['dont_modify_dishes'] = "Vous n'avez pas modifier le plat";
-   }
-   $urlLogin = "panel.php";
-   echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
-}
 
+      $reqUpdateDishes->execute([ucfirst($_POST['modify_dishes_name']), $_POST['modify_dishes_description'], $_POST['modify_dishes_food'], $_POST['modify_sub_categorie_dishes'], $_GET['dishes']]);
+   } else {
+      $_SESSION['flash']['danger'] = "Vous n'avez pas modifier le plat";
+   }
+}
 // testé si on ajoute pas d'allergènes a l'aliment $errors
 
 if (isset($_POST['validate_add_food_allergic'])) {
    foreach ($_POST['food_id_add_modify'] as $i => $idModifyFood) {
+      $reqSelectNameFood->execute([$idModifyFood]);
+      $selectNameFood = $reqSelectNameFood->fetch();
       if (!empty($_POST['modify_add_food_origin'][$i]) && $_POST['modify_add_food_breeding'][$i] != 'null') {
          $reqUpdateFoodDishes = $pdo->prepare('UPDATE food SET food_origin = ?, food_breeding = ? WHERE food_id = ?');
          $reqUpdateFoodDishes->execute([ucfirst($_POST["modify_add_food_origin"][$i]), $_POST["modify_add_food_breeding"][$i], $idModifyFood]);
@@ -209,19 +382,13 @@ if (isset($_POST['validate_add_food_allergic'])) {
          $reqUpdateFoodDishes->execute([ucfirst($_POST["modify_add_food_origin"][$i]), $idModifyFood]);
       }
 
-      if ($_POST['allergic_select_modify'] != 'null') {
+      if ($_POST['allergic_select_modify'][$i] != 'null') {
          $reqInsertHaveFoodModify = $pdo->prepare('INSERT INTO food_allergic SET food_id = ?, allergic_id = ?');
          $reqInsertHaveFoodModify->execute([$idModifyFood, $_POST["allergic_select_modify"][$i]]);
-      } else {
-         $reqErrorFood->execute([$_POST["allergic_select_modify"]]);
-         $errorFood = $reqErrorFood->fetch();
-         // $errors['food_add_allergic'] = "Vous n'avez pas sélectionné d'allergènes pour " . $errorFood->food_name;
       }
+      $_SESSION['flash']['success'] = "L'aliments \"" . ucfirst($selectNameFood->food_name) . "\" a été ajouté";
    }
-
-   // header('location: panel.php');
-   $urlLogin = "panel.php";
-   echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
+   header('refresh: 3; url=panel.php');
 }
 
 if (isset($_POST['delete_dishes'])) {
@@ -244,18 +411,15 @@ if (isset($_POST['delete_dishes'])) {
             $reqDeleteHaveFood->execute([$deleteDishesId]);
 
             $reqDeleteDishes = $pdo->prepare('DELETE FROM dishes WHERE dishes_id = ?')->execute([$deleteDishesId]);
-            $errors['delete_dishes'] .= 'Le plat "' . ucfirst($nameDeleteDishes->dishes_name) . '" est supprimé<br>';
+            // $errors['delete_dishes'] .= 'Le plat "' . ucfirst($nameDeleteDishes->dishes_name) . '" est supprimé<br>';
+
+            $_SESSION['flash']['danger'] .= "Le plat " . ucfirst($nameDeleteDishes->dishes_name) . ' est supprimé<br>';
+            header('refresh: 3; url=panel.php');
          } else {
             $errors['no_delete_have_menu'] = 'Le plat "' . ucfirst($nameDeleteDishes->dishes_name) . '" appartient au menu "' . ucfirst($selectNameMenu->menu_title) . '"';
          }
       }
    } else {
       $errors['dishes_delete'] = "Vous n'avez pas selectionné de plat a supprimé";
-   }
-
-   if (!isset($errors['no_delete_have_menu'])) {
-      // header('location: panel.php');
-      $urlLogin = "panel.php";
-      echo '<script type="text/javascript">window.location.href="' . $urlLogin . '";</script>';
    }
 }

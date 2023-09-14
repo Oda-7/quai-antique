@@ -17,8 +17,8 @@
       </div>
 
       <div class="m-2">
-         <input class="btn" style="background-color: #242423 ;color:white;" type="submit" name="submit_delete" value="Supprimer">
-         <input class="btn" style="background-color: #242423 ;color:white;" type="submit" name="submit_add" value="Ajouter">
+         <input class="btn button-validate m-2" type="submit" name="submit_add" value="Ajouter">
+         <input class="btn button-cancel m-2" type="submit" name="submit_delete" value="Supprimer">
       </div>
    </div>
 </form>
@@ -29,14 +29,19 @@
    <?php
    if (isset($_POST['submit_add'])) {
       if (isset($_GET)) {
-         unset($_GET);
+         unset($_GET['categorie']);
+         unset($_GET['dishes']);
+         unset($_GET['food']);
+         unset($_GET['menu']);
+         unset($_GET['id']);
       }
       echo '
       <form action="" method="post" class="d-flex flex-column flex-wrap p-2 align-items-center gap-2">
       <h3>Ajout d\'allergène</h3>
          <input class="form-control"type="text" name="allergic_name" placeholder="Nom de l\'allergène">
          <textarea class="form-control"name="allergic_food" id="" rows="5" placeholder="Aliment(s)"></textarea>
-         <input class="btn" style="background-color: #242423 ;color:white;" name="submit_add_validate" type="submit" value="Ajouter">
+         <input class="btn button-validate" name="submit_add_validate" type="submit" value="Ajouter">
+         <input class="btn button-cancel" id="cancel_add_allergic" type="button" value="Annuler">
       </form>';
    }
 
@@ -49,10 +54,20 @@
       <form action="" method="post" class="d-flex flex-column flex-wrap p-2 align-items-center gap-2" >
          <input class="form-control" type="text" name="allergic_name" value="' . $allergicUpdate->allergic_name . '">
          <textarea class="form-control"name="allergic_food" id="" rows="5" >' . $allergicUpdate->allergic_food . '</textarea>
-         <input class="btn" style="background-color: #242423 ;color:white;" name="submit_update" type="submit" value="Modifier">
-         <input class="btn" style="background-color: #242423 ;color:white;" name="cancel_allergic" type="submit" type="button" value="Annuler">
+         <input class="btn button-validate" name="submit_update" type="submit" value="Modifier">
+         <input class="btn button-cancel" name="cancel_allergic" type="submit" type="button" value="Annuler">
       </form>';
    }
    ?>
 
 </div>
+
+<script defer>
+   if (document.getElementById('cancel_add_allergic')) {
+      const cancelAddAllergic = document.getElementById('cancel_add_allergic');
+
+      cancelAddAllergic.addEventListener('click', () => {
+         window.location.href = './panel.php';
+      })
+   }
+</script>

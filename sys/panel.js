@@ -6,8 +6,6 @@ const home = document.getElementById('home')
 const menu = document.getElementById('food')
 const image = document.getElementById('image')
 
-// buttonHome.style.backgroundColor = 'green'
-
 const cookieMenu = sessionStorage.getItem('menu')
 const cookieImage = sessionStorage.getItem('image')
 
@@ -48,3 +46,38 @@ buttonMenu.addEventListener('click', function () {
 	sessionStorage.setItem('menu', 'd-block')
 	sessionStorage.removeItem('image', 'd-block')
 })
+
+// Div Session
+const divSession = document.getElementById('flash_div')
+const divErrors = document.getElementById('errors_div')
+
+if (divSession) {
+	setTimeout(function () {
+		divSession.remove()
+	}, 3000)
+}
+
+if (divErrors) {
+	setTimeout(function () {
+		divErrors.remove()
+	}, 3000)
+}
+
+// flash_div
+
+// if (
+// 	formAddCategory.classList.contains('d-flex') ||
+// 	formUpdateCategorie.classList.contains('d-flex')
+// ) {
+// 	formAddDishes.classList.replace('d-flex', 'd-none')
+// 	formUpdateDishes.classList.replace('d-flex', 'd-none')
+// } else if (
+// 	formAddDishes.classList.contains('d-flex') ||
+// 	formUpdateDishes.classList.contains('d-flex')
+// ) {
+// 	formAddCategory.classList.replace('d-flex', 'd-none')
+// 	formUpdateCategorie.classList.replace('d-flex', 'd-none')
+// }
+// else if(){
+
+// }

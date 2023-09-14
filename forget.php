@@ -1,4 +1,8 @@
-<?php $pageName = 'Mot de passe oublié';
+<?php
+$pageName = 'Mot de passe oublié';
+if (session_status() == PHP_SESSION_NONE) {
+   session_start();
+}
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -20,7 +24,6 @@ if (!empty($_POST) && !empty($_POST['email_forget'])) {
       $reset_token = rand();
       $password_reset = rand();
       $pdo->prepare('UPDATE users SET user_password = ?, user_reset_token = ?, user_reset_at = NOW() WHERE user_id = ?')->execute([password_hash($password_reset, PASSWORD_BCRYPT), $reset_token, $user->user_id]);
-      $_SESSION['flash']['success'] = "Les instructions de rappel du mot de passe vous ont été envoyées par courrier électronique.";
       $mailForget = new PHPMailer(true);
 
       $protocol = explode('/', $_SERVER['SERVER_PROTOCOL']);
@@ -62,7 +65,8 @@ if (!empty($_POST) && !empty($_POST['email_forget'])) {
 
 
          $mailForget->send();
-         $_SESSION['flash']['success'] = "Un email de confirmation vous a été envoyer";
+         $_SESSION['flash']['success'] = "Un mot de passe vous a été envoyé(e) par courrier électronique afin que vous puissiez vous connecter.\r 
+            <b>Pensez à le changer !</b>";
       } catch (Exception $e) {
          echo "Le mail n'a pas été envoyer !";
          $errorMail = $mailForget->ErrorInfo; //Envoyer le mail au propriétaire ou l'enregistrer dans un fichier de log 

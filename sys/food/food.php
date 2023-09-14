@@ -1,21 +1,22 @@
 <?php
-include './sys/food/db_food.php';
-include './sys/allergic/db_allergic.php';
+require_once './sys/db.php';
+require_once './sys/food/db_food.php';
+require_once './sys/allergic/db_allergic.php';
 
 ?>
 
 <?php if ($foodList) : ?>
    <form method="post" class="">
-      <div class="border border-3 border-dark rounded-3" style="background-color: white ;">
-         <div class=" d-flex flex-row  p-2 gap-1" style="background-color: #242423 ;color:white;">
+      <div class="border d-flex flex-row flex-md-column border-3 border-dark rounded-3" style="background-color: white ;">
+         <div class="d-flex flex-column flex-md-row justify-content-between p-2 gap-2 " style="background-color: #242423 ;color:white;">
             <p scope="col" class="pt-2">Nom des aliments</p>
-            <p scope="col" class="pt-2 pe-3">Origine</p>
+            <p scope="col" class="pt-2 ">Origine</p>
             <p scope="col" class="pt-2">Condition de vie</p>
             <p scope="col" class="pt-2">Allergènes</p>
-            <p scope="col" class=""></p>
+            <p scope="col" class="pt-2"><u>Modification</u></p>
             <p scope="col" class=""> </p>
          </div>
-         <div class="border border-1 d-flex flex-column flex-wrap" tabindex="0" style="overflow-x: scroll; height: 500px;">
+         <div class="border border-1 d-flex flex-column  flex-wrap " tabindex="0" style="overflow-x: scroll; height: 500px;">
             <?php
             foreach ($foodList as $food) {
                $reqFoodAllergic = $pdo->prepare('SELECT allergic_id FROM food_allergic WHERE food_id = ?');
@@ -27,8 +28,8 @@ include './sys/allergic/db_allergic.php';
                   $allergicName = $reqAllergicName->fetch();
                }
 
-               echo '<div class="d-flex flex-row align-items-center justify-content-between border p-1 px-2">
-                <p class="pt-3 px-1">' . $food->food_name . '</p>';
+               echo '<div class="row-2 d-flex flex-column flex-md-row align-items-center align-items-md-start justify-content-between border p-1 px-2 changeHeightAndWidht" style="">
+               <p class="pt-3 px-1">' . $food->food_name . '</p>';
                if ($food->food_origin) {
                   echo '<p class="pt-3 px-1">' . $food->food_origin . '</p>';
                } else {
@@ -47,12 +48,15 @@ include './sys/allergic/db_allergic.php';
 
                if ($foodAllergic) {
                   echo '<p class="pt-3 px-1">' . $allergicName->allergic_name . '</p>
-                  <p class="pt-3 px-1"><a type="button" href="./panel.php?food=' . $food->food_id . '&allergic=' . $allergicName->allergic_id . '"><img  src="./svg/sticky.svg"></a></p>';
+                  <div class="d-flex">
+                     <p class="pt-3 px-1"><a type="button" href="./panel.php?food=' . $food->food_id . '&allergic=' . $allergicName->allergic_id . '"><img  src="./svg/sticky.svg"></a></p>';
                } else {
                   echo '<p class="pt-3 px-1"> -- </p>
-                  <p class="pt-3 px-1"><a type="button" href="./panel.php?food=' . $food->food_id . '"><img src="./svg/sticky.svg"></a></p>';
+                  <div class="d-flex">
+                     <p class="pt-3 px-1"><a type="button" href="./panel.php?food=' . $food->food_id . '"><img src="./svg/sticky.svg"></a></p>';
                }
                echo '<p class="pt-3 px-1"><input type="checkbox" name="checkbox_delete_food[]" value="' . $food->food_id . '"></p>
+                  </div>
                </div>';
                unset($allergicName);
             }
@@ -60,8 +64,8 @@ include './sys/allergic/db_allergic.php';
          </div>
       </div>
       <div class="d-flex flex-wrap gap-2 py-2 justify-content-center">
-         <input class="btn" style="background-color: #242423 ;color:white;" type="submit" name="add_food" value="Ajouter">
-         <input class="btn" style="background-color: #242423 ;color:white;" type="submit" name="delete_food" value="Supprimer">
+         <input class="btn button-validate" type="submit" name="add_food" value="Ajouter">
+         <input class="btn button-cancel" type="submit" name="delete_food" value="Supprimer">
       </div>
    </form>
 <?php
@@ -72,7 +76,11 @@ endif; ?>
 <?php
 if (isset($_POST['add_food'])) {
    if (isset($_GET)) {
+      unset($_GET['categorie']);
+      unset($_GET['dishes']);
       unset($_GET['food']);
+      unset($_GET['menu']);
+      unset($_GET['id']);
    }
    echo '<form method="post" class="d-flex gap-2 flex-column align-items-center">
       <input class="form-control" type="text" name="add_food_name" placeholder="Aliment">
@@ -88,8 +96,8 @@ if (isset($_POST['add_food'])) {
       echo '<option value="' . $allergic->allergic_id . '">' . $allergic->allergic_name . '</option>';
    }
    echo '</select>
-      <input class="btn mb-2" style="background-color: #242423 ;color:white;" type="submit" name="validate_add_food">
-      <input class="btn mb-2" style="background-color: #242423 ;color:white;" type="submit" id="close_post_food" value="Annuler">
+      <input class="btn mb-2 button-validate"  type="submit" name="validate_add_food" value="Valider l\'aliment">
+      <input class="btn mb-2 button-cancel"  type="submit" id="close_post_food" value="Annuler">
    </form>';
 }
 
@@ -135,7 +143,7 @@ if (isset($_GET['food'])) {
    }
 
    echo ' </select>
-      <input class="btn mb-2" style="background-color: #242423 ;color:white;" type="submit" id="close_post_modify_food" value="Annuler">
-      <input class="btn" style="background-color: #242423 ;color:white;" type="submit" name="modify_food" value="Modifier">
+   <input class="btn button-validate" type="submit" name="modify_food" value="Modifier">
+      <input class="btn mb-2 button-cancel" type="submit" id="close_post_modify_food" value="Annuler">
    </form>';
 }

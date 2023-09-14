@@ -36,4 +36,19 @@ class CategorieController
             }
         }
     }
+
+    public function modifyCategorie(int $id)
+    {
+        $reqSelectCategorie = $this->pdo->prepare('SELECT * FROM sub_categorie WHERE sub_categorie_id = ?')->execute([$_GET['categorie']]);
+        $reqModifyCategorie = $this->pdo->prepare('UPDATE sub_categorie SET sub_categorie_name = ?, categorie_id = ? WHERE sub_categorie_id = ?');
+
+        if (!empty($_POST['categorie_name']) || $id != $_GET['categorie']) {
+            $reqModifyCategorie->execute([ucfirst($_POST['categorie_name']), $id, $_GET['categorie']]);
+            $_SESSION['flash']['success'] = 'La catégorie ' . ucfirst($_POST['categorie_name']) . ' a été modifié';
+            header('refresh:3;url=panel.php');
+        } else {
+            $errors['modify_categorie'] = "Vous n'avez pas modifié la catégorie";
+            header('refresh:3;url=panel.php');
+        }
+    }
 }

@@ -9,7 +9,10 @@ $reqSelectDishesBySubcategorie = $pdo->prepare('SELECT * FROM dishes WHERE sub_c
 <div class="container mt-4 ">
    <div class="d-flex flex-column justify-content-center align-items-center mt-5">
       <h1 class="pb-1">Voici nos Cartes</h1>
-      <small class="pb-4"><b>Allergènes :</b> <img src="./svg/circle-info.svg"></small>
+      <div class="m-1 pb-4">
+         <small><b><u>Cliquer sur le bouton pour obtenir la liste des allergènes :</u></b></small>
+         <img src="./svg/circle-info_dark.svg">
+      </div>
    </div>
    <div class="pb-4 row gap-5 justify-content-center mx-2">
       <?php

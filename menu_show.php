@@ -11,11 +11,14 @@ include './sys/dishes/db_dishes.php';
 include './sys/food/db_categorie.php';
 ?>
 
-<div class="d-flex justify-content-center mt-5 py-4">
-   <h1>Voici nos Menus</h1>
+<div class="d-flex flex-column  justify-content-center mt-5 py-4">
+   <h1 class="text-center">Voici nos Menus</h1>
 
+   <div class="m-1">
+      <small><b><u>Cliquer sur le bouton pour obtenir la liste des allergènes :</u></b></small>
+      <img src="./svg/circle-info_dark.svg">
+   </div>
 </div>
-<small class=""><b>Allergènes :</b> <img src="./svg/circle-info.svg"></small>
 
 <div class="d-flex align-items-center align-items-sm-start justify-content-evenly  py-3 flex-wrap gap-5">
 
@@ -37,12 +40,10 @@ include './sys/food/db_categorie.php';
          $reqSelectHaveMenu->execute([$menu->menu_id]);
          $SelectHaveMenu = $reqSelectHaveMenu->fetchAll();
          // nom menu
-         echo '<div class="d-flex gap-2 flex-wrap flex-column px-3 py-3 border border-3 border-dark align-items-center" style="background-color: #333533 ;color: #e8eddf;border-radius:0% 5%;">
-            
-            <h2 class="mx-3 pb-2 mb-4 border-bottom">' . $menu->menu_title . '</h2> 
-            <p class="m-0">Prix : ' . $menu->menu_price . '</p>
-             ' . $menu->menu_description . '';
+         echo '<div class="d-flex gap-2 flex-wrap flex-column-reverse px-3 py-3 border border-3 border-dark align-items-center" style="background-color: #333533 ;color: #e8eddf;border-radius:0% 5%;">';
 
+
+         $listMenuAllergic = [];
          foreach ($SelectHaveMenu as $haveMenu) {
             // Plat menu
             $reqSelectDishesMenu = $pdo->prepare('SELECT * FROM dishes WHERE dishes_id = ?');
@@ -86,15 +87,27 @@ include './sys/food/db_categorie.php';
                   }
                }
             }
-            echo '
-               <a role="button" data-bs-html="true" class="btn " id="allergic" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="';
+
             foreach ($ListAllergic as $a => $allergic) {
-               echo ' - ' . $allergic->allergic_food . '<br>';
+               if (!in_array($allergic->allergic_name, $listMenuAllergic)) {
+                  array_push($listMenuAllergic, $allergic->allergic_name);
+               }
             }
-            echo '"><img src="./svg/circle-info.svg">
-               </a>
-               </section>';
+            echo '</section>';
          }
+
+         echo '<div>
+            <h2 class="mx-3 pb-2 mb-4 border-bottom">' . $menu->menu_title . '</h2> 
+            ' . $menu->menu_description . '
+            <div class="d-flex flex-wrap align-items-center justify-content-around">
+            <p class="m-0"><b>Prix : ' . $menu->menu_price . '</b></p>
+            <a role="button" data-bs-html="true" class="btn " id="allergic" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="';
+         foreach ($listMenuAllergic as $a => $allergic) {
+            echo ' - ' . $allergic . '<br>';
+         }
+         echo '"><img src="./svg/circle-info.svg">
+            </a></div>
+         </div>';
          echo '</div>';
       }
    } else {

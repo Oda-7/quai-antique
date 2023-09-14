@@ -26,8 +26,11 @@ if ($dayTime) {
                   if ($dayTable->planning_hours_open) {
                      echo substr($dayTable->planning_hours_open, 0, -3) . ' - ' . substr($dayTable->planning_hours_close, 0, -3);
                   }
+                  if ($dayTable->planning_hours_open && $dayTable->planning_second_hours_open) {
+                     echo ' / ';
+                  }
                   if ($dayTable->planning_second_hours_open) {
-                     echo ' / ' . substr($dayTable->planning_second_hours_open, 0, -3) . ' - ' . substr($dayTable->planning_second_hours_close, 0, -3);
+                     echo substr($dayTable->planning_second_hours_open, 0, -3) . ' - ' . substr($dayTable->planning_second_hours_close, 0, -3);
                   }
                }
             }
@@ -38,8 +41,8 @@ if ($dayTime) {
    </div>
 
    <form class="d-flex flex-wrap flex-column gap-3 align-items-center" action="" method="post">
-      <input type="submit" class="btn" style="background-color: #333533 ;color: #e8eddf;" name="submit_modify_planning" value="Modifier le planning">
-      <input style="background-color: #333533 ;color: #e8eddf;" type="submit" style="background-color: #333533 ;color: #e8eddf;" name="submit_add_planning" value="Ajouter un planning" id="add_planning" class="<?= $addPlanning ?> btn">
+      <input type="submit" class="btn button-validate" name="submit_modify_planning" value="Modifier le planning">
+      <input type="submit" name="submit_add_planning" value="Ajouter un planning" id="add_planning" class="<?= $addPlanning ?> btn button-validate">
 
       <div class="d-flex flex-row flex-wrap gap-2 justify-content-center ">
          <?php
@@ -57,13 +60,13 @@ if ($dayTime) {
                <label>1ere ouverture :</label>';
                echo '<div class="d-flex flex-row align-items-center gap-1">
                <select class="form-select" name="hours_open_' . $d->planning_name . '">';
-               hoursAm($dayOpen[0]);
+               hoursAmFirstPart($dayOpen[0]);
                echo '</select>
             <select class="form-select" name="minute_open_' . $d->planning_name . '">';
                minute($dayOpen[1]);
                echo '</select> -
             <select class="form-select" name="hours_close_' . $d->planning_name . '">';
-               hoursAm($dayClose[0]);
+               hoursAmSecondPart($dayClose[0]);
                echo '</select>
             <select class="form-select" name="minute_close_' . $d->planning_name . '">';
                minute($dayClose[1]);
@@ -71,13 +74,13 @@ if ($dayTime) {
             <label>2nde ouverture :</label>
             <div class="d-flex flex-row align-items-center gap-1">
             <select class="form-select" name="second_hours_open_' . $d->planning_name . '">';
-               hoursPm($daySecondOpen[0]);
+               hoursPmFirstPart($daySecondOpen[0]);
                echo '</select>
             <select class="form-select" name="second_minute_open_' . $d->planning_name . '">';
                minute($daySecondOpen[1]);
                echo '</select> - 
             <select class="form-select" name="second_hours_close_' . $d->planning_name . '">';
-               hoursPm($daySecondClose[0]);
+               hoursPmSecondPart($daySecondClose[0]);
                echo '</select>
             <select class="form-select" name="second_minute_close_' . $d->planning_name . '">';
                minute($daySecondClose[1]);
@@ -87,7 +90,9 @@ if ($dayTime) {
             </div>
          </li>';
             }
-            echo '</div><input class="btn" style="background-color: #333533 ;color: #e8eddf;" type="submit" name="submit_validate" value="Valider">';
+            echo '</div>
+            <input class="btn" style="background-color: #333533 ;color: #e8eddf; box-shadow: 3px 3px 4px 1px rgba(0, 0, 0, 1)" type="submit" name="submit_validate" value="Valider">
+            <input class="btn" style="background-color: #f60303 ;color: #e8eddf; box-shadow: 3px 3px 4px 1px rgba(0, 0, 0, 1)" id="cancel_planning" type="button" value="Annuler">';
          }
          ?>
 
@@ -96,3 +101,13 @@ if ($dayTime) {
    </form>
 </section>
 <br>
+
+<script>
+   if (document.getElementById('cancel_planning')) {
+      const cancelPlanning = document.getElementById('cancel_planning');
+
+      cancelPlanning.addEventListener('click', () => {
+         window.location.href = 'panel.php';
+      })
+   }
+</script>
